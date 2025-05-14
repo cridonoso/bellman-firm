@@ -14,5 +14,7 @@
   "k_max": 90,
   "z_discretization_method": "Tauchen",
   "niter": 2000,
-  "tol": 1e-6
+  "tol": 1e-6,
+  "cost_options": ["fixed", "proportional"],
+  "cost_type":"fixed" 
 }

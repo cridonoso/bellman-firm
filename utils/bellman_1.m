@@ -1,104 +1,57 @@
-function [V_new, policy_K_matrix] = bellman_1(...
+function [V_new, policy_K] = bellman_1(...
     k_grid, z_grid, V_next, prob_z_transition, ...
     params, cost_type)
-% BELLMAN_1 Computes the updated value function and capital policy matrix
-% for a dynamic investment problem with discrete capital and productivity grids.
-%
-% This function solves the Bellman equation for a firm choosing whether
-% to adjust its capital stock, facing either fixed or proportional adjustment costs.
-% The model includes technology shocks and capital depreciation.
-%
-% PARAMETERS:
-%   k_grid              - (Nk x 1) Vector of discrete capital levels.
-%   z_grid              - (Nz x 1) Vector of productivity levels in levels (not log).
-%   V_next              - (Nk x Nz) Value function at the next iteration.
-%   prob_z_transition   - (Nz x Nz) Markov transition matrix for productivity z.
-%   params              - Struct with model parameters:
-%       .theta   - Capital share in production function.
-%       .R       - Cost of capital.
-%       .delta   - Depreciation rate.
-%       .beta    - Discount factor.
-%       .F       - Fixed adjustment cost (used if cost_type == 'fixed').
-%       .P       - Proportional adjustment cost (used if cost_type == 'proportional').
-%       .k_points, .logz_points - Number of grid points in k and z respectively.
-%   cost_type           - String, either 'fixed' or 'proportional', indicating the type
-%                         of adjustment cost applied when changing capital.
-%
-% RETURNS:
-%   V_new               - (Nk x Nz) Updated value function matrix.
-%   policy_K_matrix     - (Nk x Nz) Matrix with the optimal capital choice for each (k,z).
-%
-% DESCRIPTION:
-% For each current state (k, z), the function evaluates two options:
-%   - No adjustment: The firm keeps capital constant (only subject to depreciation).
-%   - Adjustment: The firm can choose a new capital level from the grid, incurring
-%                 either a fixed or proportional adjustment cost.
-%
-% For both cases, it computes:
-%   - Current profits: z * k^theta - R * k
-%   - Continuation value: interpolated V_next at (1 - delta) * k'
-%   - Total value: profit + discounted expected value (using prob_z_transition)
-%
-% The function compares both options and chooses the one with the highest value.
-% It returns the new value function and the corresponding capital policy.
-%
-% NOTE:
-%   - Linear interpolation is used to evaluate the continuation value when
-%     the post-depreciation capital (1 - delta) * k is not exactly on the grid.
-%   - The capital choice policy is conditional on the decision to adjust or not.
-%
-% AUTHOR: Cristobal Donoso Oliva
-% DATE: May 13 2025
+
+    Nk = params.k_points;
+    Nz = params.logz_points;
 
     % =====================================================================
     % NOT ADJUST ==========================================================
     % =====================================================================
-    profit_if_not_adjust_mat = z_grid' .* (k_grid.^params.theta) - params.R .* k_grid; 
-    K_next_if_not_adjust_vec = (1 - params.delta) * k_grid; % (Nk x 1)
-
-    V_interp_for_no_adjust = zeros(params.k_points, params.logz_points); % (Nk x Nz_next)
+    % Profit if no adjustment is made, for all (k_in, z) combinations
+    profit_if_not_adjust = z_grid' .* (k_grid.^params.theta) - params.R .* k_grid; 
+    k_next = (1 - params.delta) * k_grid; % (Nk x 1)
+    
+    % Interpolate V_next_guess to get continuation values
+    V_interp_for_no_adjust = zeros(Nk, Nz); % (Nk x Nz_next)
     for i_z_next = 1:params.logz_points
-        V_interp_for_no_adjust(:, i_z_next) = interp1(k_grid, V_next(:, i_z_next), K_next_if_not_adjust_vec, 'linear', 'extrap');
+        V_interp_for_no_adjust(:, i_z_next) = interp1(k_grid, V_next(:, i_z_next), k_next, 'linear', 'extrap');
     end
-    E_V_no_adjust = V_interp_for_no_adjust * prob_z_transition'; % (Nk x Nz)
-    V_no_adjust = profit_if_not_adjust_mat + params.beta * E_V_no_adjust; % (Nk x Nz)
+    % Expected continuation value if no adjustment: E[V((1-delta)k_in, z') | z]
+    E_V = V_interp_for_no_adjust * prob_z_transition'; % (Nk x Nz)
+    V_no_adjust = profit_if_not_adjust + params.beta * E_V; % (Nk x Nz)
+
 
     % =====================================================================
     % ADJUST ==============================================================
-    % =====================================================================    
-    K_prime_candidates = k_grid; % (Nk x 1)
-    Profit_at_k_prime_z = z_grid' .* (K_prime_candidates.^params.theta) - params.R .* K_prime_candidates; 
-
-    Adjustment_cost_at_k_prime_z = zeros(params.k_points, params.logz_points); % (Nk_prime x Nz)
-    if strcmpi(cost_type, 'fixed') % Asumiendo que tienes params.cost_type
-        Adjustment_cost_at_k_prime_z = params.F; % Scalar, se expandirá
-    elseif strcmpi(cost_type, 'proportional')
-        Adjustment_cost_at_k_prime_z = params.P * max(0, Profit_at_k_prime_z);
+    % =====================================================================   
+    profit_curr_rshp = reshape(profit_if_not_adjust, [Nk, 1, Nz]); % Dim: (Nk x 1 x Nz)
+    % Expectation calculation
+    V_future = reshape(params.beta * E_V, [1, Nk, Nz]); % Dim: (1 x Nk_prime x Nz)
+    
+    % Compute adjustment costs 
+    adj_cost = 0.; % assumin no adjustment cost by default 
+    if strcmpi(cost_type, 'fixed') % fixed cost
+        adj_cost = params.F;
+    elseif strcmpi(cost_type, 'proportional') 
+        term_zk_theta = z_grid' .* (k_grid.^params.theta); % (Nk x Nz)
+        term_Rk_prime = params.R .* k_grid; % (Nk_prime x 1)
+        term_zk_theta_reshaped = reshape(term_zk_theta, [Nk, 1, Nz]);
+        term_Rk_prime_reshaped = reshape(term_Rk_prime, [1, Nk, 1]);
+        B_tensor = term_zk_theta_reshaped - term_Rk_prime_reshaped; % Dim: (Nk x Nk_prime x Nz)
+        adj_cost = params.P * max(0, B_tensor); % Dim: (Nk x Nk_prime x Nz)
     end
-    K_prime_next_if_adjust_vec = (1 - params.delta) * K_prime_candidates; % (Nk x 1)
-    
-    V_interp_for_adjust = zeros(params.k_points, params.logz_points); % (Nk_prime x Nz_next)
-    for i_z_next = 1:params.logz_points
-        V_interp_for_adjust(:, i_z_next) = interp1(k_grid, V_next(:, i_z_next), K_prime_next_if_adjust_vec, 'linear', 'extrap');
-    end
-    E_V_adjust_k_prime_z = V_interp_for_adjust * prob_z_transition'; % (Nk_prime x Nz)
-    
-    % (Nk_prime x Nz)
-    Value_candidate_if_adjust = Profit_at_k_prime_z - Adjustment_cost_at_k_prime_z + params.beta * E_V_adjust_k_prime_z; 
-    
-    [V_adjust_for_z_row, Idx_optimal_K_prime_for_z_row] = max(Value_candidate_if_adjust, [], 1);
 
-    Policy_K_prime_if_adjust_for_z_col = k_grid(Idx_optimal_K_prime_for_z_row'); % (Nz x 1)
-    V_adjust = repmat(V_adjust_for_z_row, params.k_points, 1); % (Nk x Nz)
-    
-    V_new = max(V_no_adjust, V_adjust); % (Nk x Nz)
-    Adjust_decision_mat = (V_adjust > V_no_adjust); % (Nk x Nz)
+    % Final value function and policy
+    V_new = profit_curr_rshp - adj_cost + V_future; % Dim (Nk x Nk_prime x Nz)
+    [V_new, idx_best_k] = max(V_new, [], 2);
+    V_adjust = squeeze(V_new);
+    policy_K_adjust = k_grid(squeeze(idx_best_k));
 
-    Policy_K_chosen_if_adjust_mat = repmat(Policy_K_prime_if_adjust_for_z_col', params.k_points, 1); % (Nk x Nz)
-    Current_K_mat = repmat(k_grid, 1, params.logz_points); % (Nk x Nz)
-    
-    policy_K_matrix = Adjust_decision_mat .* Policy_K_chosen_if_adjust_mat + (~Adjust_decision_mat) .* Current_K_mat;
-    % (Nk x Nz)
-
+    % Combine
+    V_new = max(V_no_adjust, V_adjust);
+    adjust_decision = (V_adjust > V_no_adjust);
+    current_k= repmat(k_grid, 1, Nz);
+    policy_K = adjust_decision .* policy_K_adjust + (~adjust_decision) .* current_k;
 end
 
