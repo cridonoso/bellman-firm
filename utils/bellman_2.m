@@ -28,20 +28,20 @@ function [V_new, policy_K] = bellman_2(k_grid, z_grid, V_next, prob_z_transition
     % =====================================================================   
     profit_adjust = reshape(profit_noadjust, [1, Nk, Nz]); % Dim: (1 x Nk_prime x Nz)
     % Expectation calculation
-    V_future = reshape(params.beta * EV, [1, Nk, Nz]);
+    V_future = params.beta * EV;
 
     % Compute adjustment costs 
     adj_cost = 0.; % assumin no adjustment cost by default 
     if strcmpi(cost_type, 'fixed') % fixed cost
-        adj_cost = params.F;
+        profit_adjust = profit_noadjust - params.F;
     elseif strcmpi(cost_type, 'proportional') 
-        adj_cost_base_for_P = profit_noadjust;
-        adj_cost = params.P * max(0, adj_cost_base_for_P); % (Nk_prime x Nz)
-        adj_cost = reshape(adj_cost, [1, Nk, Nz]); % Dim: (1 x Nk_prime x Nz)
+        profit_adjust = (1 - params.P) * profit_noadjust; % (Nk_prime x Nz)
+
     end
 
-    V_adjust = profit_adjust - adj_cost + V_future; % Dim (Nk x Nk_prime x Nz)
-    [max_value_if_adjust, idx_best_k_prime] = max(V_adjust, [], 2); 
+    V_adjust = profit_adjust + V_future; % Dim (Nk x Nk_prime x Nz)
+
+    [max_value_if_adjust, idx_best_k_prime] = max(V_adjust, [], 1); 
     V_adjust = squeeze(max_value_if_adjust); 
     policy_K_adjust = k_grid(squeeze(idx_best_k_prime));
 
@@ -49,7 +49,7 @@ function [V_new, policy_K] = bellman_2(k_grid, z_grid, V_next, prob_z_transition
     % =====================================================================
     % COMBINE AND FINAL POLICY ============================================
     % =====================================================================   
-    V_adjust_expanded = repmat(V_adjust', Nk, 1); % Dim: (Nk x Nz)
+    V_adjust_expanded = repmat(V_adjust, Nk, 1); % Dim: (Nk x Nz)
     V_new = max(V_no_adjust, V_adjust_expanded);
     adjust_decision = (V_adjust_expanded > V_no_adjust); % (Nk x Nz)
     

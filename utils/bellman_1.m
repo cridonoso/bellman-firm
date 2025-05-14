@@ -1,7 +1,10 @@
 function [V_new, policy_K] = bellman_1(...
     k_grid, z_grid, V_next, prob_z_transition, ...
     params, cost_type)
-
+    % k_grid = (300x1)
+    % z_grid = (12x1)
+    % V_next = (300x12)
+    % prob_z_transition (12x12)
     Nk = params.k_points;
     Nz = params.logz_points;
 
@@ -25,26 +28,22 @@ function [V_new, policy_K] = bellman_1(...
     % =====================================================================
     % ADJUST ==============================================================
     % =====================================================================   
-    profit_curr_rshp = reshape(profit_if_not_adjust, [Nk, 1, Nz]); % Dim: (Nk x 1 x Nz)
     % Expectation calculation
     V_future = reshape(params.beta * E_V, [1, Nk, Nz]); % Dim: (1 x Nk_prime x Nz)
     
     % Compute adjustment costs 
-    adj_cost = 0.; % assumin no adjustment cost by default 
     if strcmpi(cost_type, 'fixed') % fixed cost
-        adj_cost = params.F;
+        profit_if_adjust = profit_if_not_adjust - params.F;
+        profit_curr_rshp = reshape(profit_if_adjust, [Nk, 1, Nz]); % (Nk_actual x 1 x Nz)
     elseif strcmpi(cost_type, 'proportional') 
-        term_zk_theta = z_grid' .* (k_grid.^params.theta); % (Nk x Nz)
-        term_Rk_prime = params.R .* k_grid; % (Nk_prime x 1)
-        term_zk_theta_reshaped = reshape(term_zk_theta, [Nk, 1, Nz]);
-        term_Rk_prime_reshaped = reshape(term_Rk_prime, [1, Nk, 1]);
-        B_tensor = term_zk_theta_reshaped - term_Rk_prime_reshaped; % Dim: (Nk x Nk_prime x Nz)
-        adj_cost = params.P * max(0, B_tensor); % Dim: (Nk x Nk_prime x Nz)
+        profit_if_adjust = (1 - params.P) * profit_if_not_adjust; % (Nk x Nz)
+        profit_curr_rshp = reshape(profit_if_adjust, [Nk, 1, Nz]); % (Nk_actual x 1 x Nz)
     end
 
     % Final value function and policy
-    V_new = profit_curr_rshp - adj_cost + V_future; % Dim (Nk x Nk_prime x Nz)
+    V_new =  profit_curr_rshp + V_future; % Dim (Nk x Nk_prime x Nz)
     [V_new, idx_best_k] = max(V_new, [], 2);
+
     V_adjust = squeeze(V_new);
     policy_K_adjust = k_grid(squeeze(idx_best_k));
 

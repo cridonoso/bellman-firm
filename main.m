@@ -25,8 +25,8 @@ tic; % Start timer
 for iter = 1:params.niter
     V_next = V_guess;
     
-    [V_new, policy_K] = bellman_2(k_grid, z_grid, ...
-        V_next, prob_z_transition, params, 'fixed');
+    [V_new, policy_K] = bellman_1(k_grid, z_grid, ...
+        V_next, prob_z_transition, params, 'proportional');
 
     % Check convergence
     [stop, V_guess] = check_convergence(V_new, V_next, iter, params);
@@ -35,3 +35,10 @@ for iter = 1:params.niter
 end
 toc; % Stop timer
 tic; % Start timer again
+
+max_k = max(policy_K, [], 1);
+min_k = min(policy_K, [], 1);
+mean_k = mean(policy_K, 1);
+plot(z_grid, max_k);hold on
+plot(z_grid, min_k);hold on
+plot(z_grid, mean_k);
