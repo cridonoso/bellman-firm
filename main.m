@@ -25,23 +25,26 @@ tic; % Start timer
 for iter = 1:params.niter
     V_next_iter = V_guess;
     
-    [V_new_iter, policy_K_matrix_iter] = bellman_1(k_grid, z_grid, ...
+    [V_new_iter_1, policy_K_matrix_iter_1] = bellman_1(k_grid, z_grid, ...
         V_next_iter, prob_z_transition, params, 'fixed');
-    
+
+    [V_new_iter_2, policy_K_matrix_iter_2] = bellman_2(k_grid, z_grid, ...       
+        V_next_iter, prob_z_transition, params, 'fixed');
+
     % Check convergence
-    diff = max(abs(V_new_iter(:) - V_guess(:)));
+    diff = max(abs(V_new_iter_2(:) - V_guess(:)));
     if diff < params.tol
         disp(['Convergence achieved at iteration: ', num2str(iter), ', Diferencia: ', num2str(diff)]);
-        V_guess = V_new_iter;               % Save the best value
-        policy_K_matrix = policy_K_matrix_iter; % Save the final policy
+        V_guess = V_new_iter_2;               % Save the best value
+        policy_K_matrix = policy_K_matrix_iter_2; % Save the final policy
         break; 
     end
     
     % Update guess for the next iteration
-    V_guess = V_new_iter;
+    V_guess = V_new_iter_2;
     if iter == params.niter
         disp('Maximum number of iterations reached. No convergence achieved.');
-        policy_K_matrix = policy_K_matrix_iter;
+        policy_K_matrix = policy_K_matrix_iter_2;
     end
 end
 toc; % Stop timer
