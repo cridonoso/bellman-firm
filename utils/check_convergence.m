@@ -15,7 +15,7 @@ function [stop_flag , V_guess]= check_convergence(V_next, V_guess, iter, params)
 % algorithm to continue iterating.
     diff = max(abs(V_next(:) - V_guess(:)));
     if diff < params.tol
-        disp(['Convergence achieved at iteration: ', num2str(iter), ', Diferencia: ', num2str(diff)]);
+        disp(['Convergence achieved at iteration: ', num2str(iter), ', Difference: ', num2str(diff)]);
         V_guess = V_next; % save the best value
         stop_flag  = true;
     else

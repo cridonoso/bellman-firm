@@ -1,4 +1,4 @@
-function [V_new, policy_K] = bellman_2(k_grid, z_grid, V_next, prob_z_transition, params, cost_type)
+function [V_new, policy_K, adjust_decision] = bellman_2(k_grid, z_grid, V_next, prob_z_transition, params, cost_type)
 
     Nk = params.k_points;
     Nz = params.logz_points;
@@ -12,7 +12,8 @@ function [V_new, policy_K] = bellman_2(k_grid, z_grid, V_next, prob_z_transition
     % Interpolate V_next_guess to get continuation values
     V_interp_from_k_grid = zeros(Nk, Nz); % (Nk x Nz_next)
     for i_z_next = 1:params.logz_points
-        V_interp_from_k_grid(:, i_z_next) = interp1(k_grid, V_next(:, i_z_next), k_next_noadjust, 'linear', 'extrap');
+        V_interp_from_k_grid(:, i_z_next) = interp1(k_grid, ...
+            V_next(:, i_z_next), k_next_noadjust, 'linear', 'extrap');
     end
     EV = V_interp_from_k_grid * prob_z_transition'; % Dim: (Nk x Nz)
 
@@ -31,7 +32,6 @@ function [V_new, policy_K] = bellman_2(k_grid, z_grid, V_next, prob_z_transition
     V_future = params.beta * EV;
 
     % Compute adjustment costs 
-    adj_cost = 0.; % assumin no adjustment cost by default 
     if strcmpi(cost_type, 'fixed') % fixed cost
         profit_adjust = profit_noadjust - params.F;
     elseif strcmpi(cost_type, 'proportional') 
@@ -44,7 +44,7 @@ function [V_new, policy_K] = bellman_2(k_grid, z_grid, V_next, prob_z_transition
     [max_value_if_adjust, idx_best_k_prime] = max(V_adjust, [], 1); 
     V_adjust = squeeze(max_value_if_adjust); 
     policy_K_adjust = k_grid(squeeze(idx_best_k_prime));
-
+    
  
     % =====================================================================
     % COMBINE AND FINAL POLICY ============================================

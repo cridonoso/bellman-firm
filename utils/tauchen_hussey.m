@@ -14,7 +14,7 @@ function [actualPoints, probabilities] = tauchen_hussey(n, rho, sigma, mu)
         error('Negative standard deviation provided');
     end
 
-    baseSigma = sigma / sqrt(1 - rho^2);
+    baseSigma = sigma ;%/ sqrt(1 - rho^2);
 
     [actualPoints, weights] = gaussnorm(n, mu, baseSigma^2);
 
