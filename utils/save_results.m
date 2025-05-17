@@ -41,6 +41,7 @@ function save_results(value, k_star, k_lower, k_upper, z, folder, scenario, cost
         mkdir(folder);
     end
     path  = fullfile(folder, fn_value);
+
     save(char(path), 'value', 'k_star', 'k_upper', 'k_lower', 'z', 'diff_per_iter')
     disp('Matrices successfully saved!');
 end

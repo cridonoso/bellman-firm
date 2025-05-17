@@ -15,12 +15,13 @@
 
 clearvars
 clc
+
 addpath("utils"); % Add utility functions to path
 
 % Load base parameters from a JSON configuration file
 % Assumes params_p3.json is a representative file for loading initial common params
 % Modify 'params_p3.json' if a different base configuration is needed.
-str = fileread('./config/params_p3.json'); 
+str = fileread('./config/params_p7.json'); 
 params_base = jsondecode(str);
 
 tic; % Start timer
@@ -44,8 +45,9 @@ elseif strcmp(params_base.exp_name, "p7") % Check string equality
         params.sigma = params_base.sigma(i);  % Set current sigma
         
         % Define target folder for results of this specific sigma run
-        target_folder = sprintf('./backup/%s/sigma_%.2f/', char(params_base.exp_name), params.sigma);
-        params.exp_name_run = target_folder; % Pass specific folder for this run's results
+        target_folder = sprintf('./backup/%s/sigma_%.3f/', char(params_base.exp_name), params.sigma);
+
+        params.exp_name = target_folder; % Pass specific folder for this run's results
                                          % (original params.exp_name kept for base ID if needed)
         
         disp(['Running p7 for sigma = ', num2str(params.sigma)]);
