@@ -2,6 +2,8 @@
 
 This repository contains the computational implementation of a dynamic investment model with adjustment costs, developed as part of the **Computational Assignment for the course ENECO 630 - Macroeconomics I** in the Master in Economics program at the University of Chile (Fall 2025), taught by Professor Eduardo Engel.
 
+![sigma](https://github.com/cridonoso/bellman-firm/blob/main/figuras/p7/sigma_move.gif?raw=true)
+
 ## Model Description
 
 The model represents a firm that rents capital in a competitive market and decides whether to adjust its capital stock in response to productivity shocks. The firm's optimal decision depends on:
