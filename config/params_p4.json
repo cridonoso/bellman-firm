@@ -6,7 +6,7 @@
   "rho": 0,
   "sigma": 0.05,
   "mu":0.0,
-  "delta": 0,
+  "delta": 0,z
   "F": 0.03,
   "P": 0.02,
   "logz_points": 12,

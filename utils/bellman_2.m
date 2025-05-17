@@ -1,4 +1,39 @@
 function [V_new, policy_K, adjust_decision] = bellman_2(k_grid, z_grid, V_next, prob_z_transition, params, cost_type)
+% BELLMAN_2 Performs one iteration of the Bellman equation for a dynamic
+%           firm investment model with capital adjustment costs. (Alternative version)
+%
+%   This function computes the updated value function (V_new) and the
+%   optimal capital policy (policy_K) for each state (k,z), given the
+%   value function from the next period (V_next). It compares the value of
+%   not adjusting capital versus adjusting capital.
+%   NOTE: This version has a different structure for calculating the value
+%   of adjustment compared to typical formulations, particularly in how
+%   current profits and future values are combined before maximization.
+%
+%   Args:
+%       k_grid (double vector): Grid of current capital stock levels (Nk x 1).
+%       z_grid (double vector): Grid of current productivity shock levels (Nz x 1).
+%       V_next (double matrix): Value function from the next period, V_t+1(k,z) (Nk x Nz).
+%       prob_z_transition (double matrix): Transition probability matrix for z.
+%                                          P(z_j_next | z_i_current) (Nz x Nz).
+%                                          (Assumed: element (r,c) is P(z_next=z_r | z_current=z_c))
+%       params (struct): Structure containing model parameters:
+%           - theta (double): Capital share in production function.
+%           - R (double): Gross rental rate or user cost of capital.
+%           - delta (double): Capital depreciation rate.
+%           - beta (double): Discount factor.
+%           - F (double, optional): Fixed cost of capital adjustment.
+%           - P (double, optional): Proportional cost of capital adjustment.
+%           - k_points (int): Number of points in k_grid (Nk).
+%           - logz_points (int): Number of points in z_grid (Nz).
+%       cost_type (char array): Type of adjustment cost: 'fixed' or 'proportional'.
+%
+%   Returns:
+%       V_new (double matrix): Updated value function V_t(k,z) (Nk x Nz).
+%       policy_K (double matrix): Optimal next-period capital stock k_t+1(k_t,z_t) (Nk x Nz).
+%                                 If not adjusting, k_t+1 = k_t.
+%       adjust_decision (logical matrix): Decision to adjust capital (Nk x Nz).
+%                                         True (1) if firm adjusts, False (0) otherwise.
 
     Nk = params.k_points;
     Nz = params.logz_points;

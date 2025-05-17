@@ -1,4 +1,4 @@
-function [stop_flag , V_guess]= check_convergence(V_next, V_guess, iter, params)
+function [stop_flag , V_guess, diff]= check_convergence(V_next, V_guess, iter, params)
 % Check convergence of the value function iteration.
 %
 % This block compares the current value function guess `V_guess` with the

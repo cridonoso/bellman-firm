@@ -1,6 +1,49 @@
 function [V_new, policy_K, adjust_decision] = bellman_1(...
     k_grid, z_grid, V_next, prob_z_transition, ...
     params, cost_type)
+% BELLMAN_1 Solves one iteration of the Bellman equation for a firm's
+% investment problem with adjustment costs.
+%
+% This function calculates the value function and policy functions for a
+% given state (k_grid, z_grid) and the expected next period value function
+% (V_next). It considers two scenarios: not adjusting capital and
+% adjusting capital, then takes the maximum value.
+%
+%   Args:
+%       k_grid (double array): Grid of current capital stock levels (Nk x 1).
+%       z_grid (double array): Grid of current productivity levels (Nz x 1, typically log-linearized).
+%       V_next (double matrix): Expected value function for the next period,
+%                                V_next(k,z) (Nk x Nz).
+%       prob_z_transition (double matrix): Transition probability matrix for
+%                                          productivity states z, P(z'|z) (Nz x Nz).
+%       params (struct): Structure containing model parameters, including:
+%           - k_points (int): Number of points in the capital grid (Nk).
+%           - logz_points (int): Number of points in the productivity grid (Nz).
+%           - theta (double): Capital share in production function (e.g., k^theta).
+%           - R (double): Rental rate or user cost of capital.
+%           - delta (double): Depreciation rate of capital.
+%           - beta (double): Discount factor.
+%           - F (double, optional): Fixed cost of adjustment.
+%           - P (double, optional): Proportional cost of adjustment (as a fraction of profit).
+%       cost_type (char array): String specifying the type of adjustment cost.
+%                               Supported: 'fixed', 'proportional'.
+%
+%   Returns:
+%       V_new (double matrix): Updated value function V(k,z) for the current
+%                              period (Nk x Nz).
+%       policy_K (double matrix): Optimal capital choice for the next period k'(k,z)
+%                                 (Nk x Nz).
+%       adjust_decision (logical matrix): Boolean matrix indicating the decision
+%                                         to adjust capital (1 if adjust, 0 if not)
+%                                         for each state (k,z) (Nk x Nz).
+%
+%   Description of Dimensions in Comments (if different from args):
+%       k_grid, z_grid: As input.
+%       V_next: As input. V_next(i,j) is V(k_i, z_j).
+%       prob_z_transition: P(z_j_next | z_i_current).
+%       Nk: params.k_points.
+%       Nz: params.logz_points (number of productivity states).
+
     % k_grid = (300x1)
     % z_grid = (12x1)
     % V_next = (300x12)
