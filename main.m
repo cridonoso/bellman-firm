@@ -12,7 +12,6 @@
 % function for each configuration and saving the results in structured
 % subfolders.
 % ------------------------------------------------------------------------
-
 clearvars
 clc
 
@@ -21,13 +20,13 @@ addpath("utils"); % Add utility functions to path
 % Load base parameters from a JSON configuration file
 % Assumes params_p3.json is a representative file for loading initial common params
 % Modify 'params_p3.json' if a different base configuration is needed.
-str = fileread('./config/params_p7.json'); 
+str = fileread('./config/params_p0.json'); 
 params_base = jsondecode(str);
 
 tic; % Start timer
 
 % Determine execution path based on experiment name (exp_name) in params
-if isscalar(params_base.sigma) && ~isfield(params_base, 'delta') % Or check if delta is also scalar if it exists
+if isscalar(params_base.sigma) && isscalar(params_base.delta) 
     % Standard run with a single sigma value (e.g., for p3, p4, p5, p6 type problems)
     disp(['Running single configuration for experiment: ', char(params_base.exp_name)])
     target_folder = sprintf('./backup/%s/', char(params_base.exp_name));

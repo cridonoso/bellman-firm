@@ -1,0 +1,21 @@
+{
+  "exp_name":"p0",
+  "beta": 0.9,
+  "R": 0.04,
+  "theta": 0.333333,
+  "rho": 0.85,
+  "sigma": 0.05,
+  "mu":0.0,
+  "delta": 0,
+  "F": 0.03,
+  "P": 0.02,
+  "logz_points": 12,
+  "k_points": 300,
+  "k_min": 0.1,
+  "k_max": 90,
+  "z_discretization_method": "Tauchen",
+  "niter": 2000,
+  "tol": 1e-6,
+  "cost_type": ["proportional"],
+  "scenario":[2] 
+}

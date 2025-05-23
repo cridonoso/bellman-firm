@@ -63,6 +63,7 @@ function [V_new, policy_K, adjust_decision] = bellman_2(k_grid, z_grid, V_next, 
     % ADJUST ==============================================================
     % =====================================================================   
     profit_adjust = reshape(profit_noadjust, [1, Nk, Nz]); % Dim: (1 x Nk_prime x Nz)
+    
     % Expectation calculation
     V_future = params.beta * EV;
 
@@ -75,7 +76,6 @@ function [V_new, policy_K, adjust_decision] = bellman_2(k_grid, z_grid, V_next, 
     end
 
     V_adjust = profit_adjust + V_future; % Dim (Nk x Nk_prime x Nz)
-
     [max_value_if_adjust, idx_best_k_prime] = max(V_adjust, [], 1); 
     V_adjust = squeeze(max_value_if_adjust); 
     policy_K_adjust = k_grid(squeeze(idx_best_k_prime));

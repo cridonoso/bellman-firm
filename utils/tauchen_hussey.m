@@ -127,6 +127,4 @@ function [actualPoints, probabilities] = tauchen_hussey(n, rho, sigma, mu)
     
     probabilities = transition ./ row_sums; % Element-wise division for each row
     
-    % Ensure rows sum to 1 after normalization, can have small numerical errors
-    % sum_check = sum(probabilities, 2); % For debugging
 end
